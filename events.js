@@ -1,6 +1,9 @@
 import { QueueEvents } from 'bullmq';
 
-const queueEvents = new QueueEvents("foo");
+const QUEUE_NAME = 'demo-queue';
+const queueEvents = new QueueEvents(QUEUE_NAME);
+
+await queueEvents.waitUntilReady();
 
 queueEvents.on('waiting', ({ jobId }) => {
   console.log(`A job with ID ${jobId} is waiting`);
@@ -11,9 +14,15 @@ queueEvents.on('active', ({ jobId, prev }) => {
 });
 
 queueEvents.on('completed', ({ jobId, returnvalue }) => {
-  console.log(`${jobId} has completed and returned ${returnvalue}`);
+  console.log(`Job ${jobId} has completed and returned`, returnvalue);
 });
 
 queueEvents.on('failed', ({ jobId, failedReason }) => {
-  console.log(`${jobId} has failed with reason ${failedReason}`);
+  console.log(`Job ${jobId} has failed with reason`, failedReason);
+});
+
+process.on('SIGINT', async () => {
+  console.log('Closing QueueEvents...');
+  await queueEvents.close();
+  process.exit(0);
 });
